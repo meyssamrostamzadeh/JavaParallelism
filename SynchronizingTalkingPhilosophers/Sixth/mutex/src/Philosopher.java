@@ -4,6 +4,9 @@ public class Philosopher implements Runnable {
     // Only an outline is presented here.  You have to fill in the bulk of the
     // code.
     private int id;
+
+    private int[] friends;
+    private int choosedFriend;
     private Table table;
 
     /** Current state, one of THINKING, LOOKING, ASKING, or TALKING */
@@ -53,7 +56,7 @@ public class Philosopher implements Runnable {
     }
 
     /** Called if the caller wants to talk to this philosopher.
-     * The calling thread will be delayed if the this philosopher is
+     * The calling thread will be delayed if  this philosopher is
      * in ASKING state and has a larger id than the caller.  In all other
      * cases, return is immediate.
      * @param caller the id of the calling philosopher.
@@ -61,19 +64,33 @@ public class Philosopher implements Runnable {
      * to the caller, foresaking all others; false in otherwise.
      */
     public synchronized boolean canWeTalk(int caller) {
-        // You must provide the appropriate code for this function.
-        // If the caller is myself, return true immediately
-        if (caller == id) {
-            return false;
+        // If the caller is myself, return false immediately
+        if ((state == TALKING) || (caller == id)) {
+            System.out.println(id + "said no because 0");
+            return  false;
+        } else if (state == ASKING) {
+            System.out.println(id + "said no because 1");
+            return  false;
+        } else if (state == LOOKING) {
+            for (int friend : friends) {
+                if (friend == caller) {
+                    choosedFriend = caller;
+                    state = TALKING;
+                    table.getPhilosopher(id).notify();
+                    System.out.println(id + "said yes");
+                    return  true;
+//                    break;
+                }
+            }
+            System.out.println(id + "said no because 2");
+            return  false;
+        } else if ((state == THINKING) && (caller > id)) {
+            System.out.println(id + "said no because 3");
+            return  false;
+        } else {
+            System.out.println(id + "said no because 4");
+            return  false;
         }
-
-        // If the caller has a higher ID, change state to ASKING
-        if (caller < id) {
-            state = ASKING;
-        }
-
-        // Otherwise, caller has a lower ID; reply NO
-        return false;
     } // canWeTalk
 
     /** Choose a friend to talk to.
@@ -88,27 +105,56 @@ public class Philosopher implements Runnable {
      * @param friends the set of potential conversants.
      * @return the chosen friend.
      */
-    private int choose(int[] friends) {
-        // You must write the contents of this method as well as any
-        // synchronized methods it calls.
-        // Randomly select a friend from the provided list
-        int chosenFriend = friends[new Random().nextInt(friends.length)];
 
-        // Check if the chosen friend is in ASKING state
-        if ( table.getPhilosopher(chosenFriend).state == ASKING) {
-            // If chosenFriend is asking, return the friend with the lower ID
-            if (chosenFriend < id) {
-                state = ASKING;
-                return chosenFriend;
-            } else {
-                // If chosenFriend has a higher ID, choose another friend
-                return choose(friends);
-            }
-        } else {
-            // If the chosen friend is not asking, agree to talk to them
-            state = TALKING;
-            return chosenFriend;
+    public synchronized void mywait(){
+        try {
+            wait();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
+    }
+
+    public synchronized int askingOthers(int friendToAsk){
+        //if i'm here means no one else is sending request
+        // and canwetalk is not running
+        if (state == TALKING) {return choosedFriend;}
+        else {
+            state = ASKING;
+            boolean answer = table.getPhilosopher(friendToAsk).canWeTalk(id);
+            if (answer) {
+                state = TALKING;
+                return friendToAsk;
+            } else {
+                state = LOOKING;
+                return -1;
+            }
+        }
+    }
+    private int choose(int[] friends) {
+
+        // Randomly select a friend from the provided list
+//        int chosenFriend = friends[new Random().nextInt(friends.length)];
+        System.out.println("inside choose"+ id);
+        for (int friend : friends) {
+            if (state != LOOKING) {break;}
+            int answer = askingOthers(friend);
+            System.out.println(id + " ask " +friend);
+            if (answer != -1) {
+                return answer;
+            }
+        }
+        System.out.println(id + "is waiting");
+        mywait();
+//        while (true){
+//            System.out.println("state is" + state);
+//            if(state == TALKING){
+//                System.out.println(" while ended");
+//                break;
+//            }
+//        };
+        System.out.println(id + " waiting ended");
+
+        return choosedFriend;
     }
 
 
@@ -124,7 +170,8 @@ public class Philosopher implements Runnable {
     public void run() {
         try {
             for (;;) {
-                int[] friends = table.think(id);
+                friends = table.think(id);
+                state = LOOKING;
                 int choice = choose(friends);
                 table.talk(id, choice);
                 startThinking();
