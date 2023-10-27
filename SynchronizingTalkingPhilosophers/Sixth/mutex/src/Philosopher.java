@@ -64,12 +64,29 @@ public class Philosopher implements Runnable {
      * to the caller, foresaking all others; false in otherwise.
      */
     public synchronized boolean canWeTalk(int caller) {
+
         if ((state == TALKING) || (caller == id)) {
             System.out.println(id + "said no because 0");
             return  false;
         } else if (state == ASKING) {
-            System.out.println(id + "said no because 1");
-            return  false;
+            if (caller < id){
+                System.out.println(id + "said no because 1");
+                return  false;
+            } else {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                if (state == TALKING){
+                    System.out.println(id + "said no because 1-1");
+                    return  false;
+                } else {
+                    System.out.println(id + "said yes after some wait");
+                    return  true;
+                }
+            }
+
         } else if (state == LOOKING) {
             for (int friend : friends) {
                 if (friend == caller) {
@@ -119,11 +136,14 @@ public class Philosopher implements Runnable {
             boolean answer = table.getPhilosopher(friendToAsk).canWeTalk(id);
             if (answer) {
                 state = TALKING;
+                notify();
                 return friendToAsk;
             } else {
                 state = LOOKING;
+                notify();
                 return -1;
             }
+
         }
     }
     private int choose(int[] friends) {
