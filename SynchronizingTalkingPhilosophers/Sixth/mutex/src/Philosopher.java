@@ -64,7 +64,6 @@ public class Philosopher implements Runnable {
      * to the caller, foresaking all others; false in otherwise.
      */
     public synchronized boolean canWeTalk(int caller) {
-        // If the caller is myself, return false immediately
         if ((state == TALKING) || (caller == id)) {
             System.out.println(id + "said no because 0");
             return  false;
@@ -79,7 +78,6 @@ public class Philosopher implements Runnable {
                     table.getPhilosopher(id).notify();
                     System.out.println(id + "said yes");
                     return  true;
-//                    break;
                 }
             }
             System.out.println(id + "said no because 2");
@@ -91,7 +89,7 @@ public class Philosopher implements Runnable {
             System.out.println(id + "said no because 4");
             return  false;
         }
-    } // canWeTalk
+    }
 
     /** Choose a friend to talk to.
      * This method should only be called when state==THINKING.
@@ -115,8 +113,6 @@ public class Philosopher implements Runnable {
     }
 
     public synchronized int askingOthers(int friendToAsk){
-        //if i'm here means no one else is sending request
-        // and canwetalk is not running
         if (state == TALKING) {return choosedFriend;}
         else {
             state = ASKING;
@@ -131,9 +127,6 @@ public class Philosopher implements Runnable {
         }
     }
     private int choose(int[] friends) {
-
-        // Randomly select a friend from the provided list
-//        int chosenFriend = friends[new Random().nextInt(friends.length)];
         System.out.println("inside choose"+ id);
         for (int friend : friends) {
             if (state != LOOKING) {break;}
@@ -145,15 +138,7 @@ public class Philosopher implements Runnable {
         }
         System.out.println(id + "is waiting");
         mywait();
-//        while (true){
-//            System.out.println("state is" + state);
-//            if(state == TALKING){
-//                System.out.println(" while ended");
-//                break;
-//            }
-//        };
         System.out.println(id + " waiting ended");
-
         return choosedFriend;
     }
 

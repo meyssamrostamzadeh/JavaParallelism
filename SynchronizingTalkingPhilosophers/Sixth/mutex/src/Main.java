@@ -1,7 +1,6 @@
 public class Main {
     public static void main(String[] args) throws TalkingException {
 
-        System.out.println("Hello world!");
         int philosophers = Integer.parseInt(args[0]);
         int cycles = Integer.parseInt(args[1]);
         int testNumber = Integer.parseInt(args[2]);
