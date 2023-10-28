@@ -66,11 +66,11 @@ public class Philosopher implements Runnable {
     public synchronized boolean canWeTalk(int caller) {
 
         if ((state == TALKING) || (caller == id)) {
-            System.out.println(id + "said no because 0");
+            System.out.println(id + " said no to " + caller+ " because he was talking");
             return  false;
         } else if (state == ASKING) {
             if (caller < id){
-                System.out.println(id + "said no because 1");
+                System.out.println(id + " said no to " + caller+ " because he was asking someone else");
                 return  false;
             } else {
                 try {
@@ -79,10 +79,10 @@ public class Philosopher implements Runnable {
                     throw new RuntimeException(e);
                 }
                 if (state == TALKING){
-                    System.out.println(id + "said no because 1-1");
+                    System.out.println(id + " said no to " + caller+ " after some wait");
                     return  false;
                 } else {
-                    System.out.println(id + "said yes after some wait");
+                    System.out.println(id + " said yes to " + caller+ " after some wait");
                     return  true;
                 }
             }
@@ -93,17 +93,17 @@ public class Philosopher implements Runnable {
                     choosedFriend = caller;
                     state = TALKING;
                     table.getPhilosopher(id).notify();
-                    System.out.println(id + "said yes");
+                    System.out.println(id + " said yes to " + caller+ " quickly");
                     return  true;
                 }
             }
-            System.out.println(id + "said no because 2");
+            System.out.println(id + " said no to " + caller+ " because he wasn't his friend");
             return  false;
         } else if ((state == THINKING) && (caller > id)) {
-            System.out.println(id + "said no because 3");
+            System.out.println(id + " said no to " + caller+ " because he was thinking");
             return  false;
         } else {
-            System.out.println(id + "said no because 4");
+            System.out.println(id + "said no because he was thinking");
             return  false;
         }
     }
@@ -121,9 +121,11 @@ public class Philosopher implements Runnable {
      * @return the chosen friend.
      */
 
-    public synchronized void mywait(){
+    public synchronized void myWait(){
         try {
-            wait();
+            while (state != TALKING) {
+                wait();
+            }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -147,17 +149,17 @@ public class Philosopher implements Runnable {
         }
     }
     private int choose(int[] friends) {
-        System.out.println("inside choose"+ id);
+        System.out.println("inside choose "+ id);
         for (int friend : friends) {
+            System.out.println(id + " ask " +friend);
             if (state != LOOKING) {break;}
             int answer = askingOthers(friend);
-            System.out.println(id + " ask " +friend);
             if (answer != -1) {
                 return answer;
             }
         }
-        System.out.println(id + "is waiting");
-        mywait();
+        System.out.println(id + " enter waiting");
+        myWait();
         System.out.println(id + " waiting ended");
         return choosedFriend;
     }
