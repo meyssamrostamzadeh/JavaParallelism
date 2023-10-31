@@ -121,19 +121,21 @@ public class Philosopher implements Runnable {
      * @return the chosen friend.
      */
 
-    public synchronized void myWait(){
-        try {
-            while (state != TALKING) {
-                wait();
-            }
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public synchronized int askingOthers(int friendToAsk){
-        if (state == TALKING) {return choosedFriend;}
-        else {
+        if (state == TALKING) {
+            return choosedFriend;
+        }else if (friendToAsk == -1) {
+            try {
+                System.out.println(id + " enter waiting");
+                while (state != TALKING) {
+                    wait();
+                }
+                System.out.println(id + " waiting ended");
+                return 0;
+            } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+            }
+        } else {
             state = ASKING;
             boolean answer = table.getPhilosopher(friendToAsk).canWeTalk(id);
             if (answer) {
@@ -149,18 +151,19 @@ public class Philosopher implements Runnable {
         }
     }
     private int choose(int[] friends) {
+        int answer;
         System.out.println("inside choose "+ id);
         for (int friend : friends) {
             System.out.println(id + " ask " +friend);
             if (state != LOOKING) {break;}
-            int answer = askingOthers(friend);
+            answer = askingOthers(friend);
             if (answer != -1) {
                 return answer;
             }
         }
-        System.out.println(id + " enter waiting");
-        myWait();
-        System.out.println(id + " waiting ended");
+        //enter waiting
+        askingOthers(-1);
+        // end of waiting
         return choosedFriend;
     }
 
